@@ -1,7 +1,10 @@
 import vaderSentiment 
+from pyspark import SparkContext 
 from vaderSentiment import SentimentIntensityAnalyzer 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer 
-analyzer = SentimentIntensityAnalyzer()  
+analyzer = SentimentIntensityAnalyzer()
+sc = SparkContext('local[2]') 
+data = sc.textFile('abcnews-date-text.csv')    
 def get_sent(sentence): 
 	analyzer = SentimentIntensityAnalyzer() 
 	return analyzer.polarity_scores(sentence) 
