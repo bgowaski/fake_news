@@ -1,0 +1,8 @@
+import vaderSentiment 
+from vaderSentiment import SentimentIntensityAnalyzer 
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer 
+analyzer = SentimentIntensityAnalyzer()  
+def get_sent(sentence): 
+	analyzer = SentimentIntensityAnalyzer() 
+	return analyzer.polarity_scores(sentence) 
+out = data.map(get_sent) 
