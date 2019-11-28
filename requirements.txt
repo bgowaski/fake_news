@@ -1,0 +1,5 @@
+vaderSentiment
+kaggle
+torch
+torchvision
+textblob
