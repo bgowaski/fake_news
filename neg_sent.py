@@ -1,15 +1,27 @@
 import numpy as np
 from pyspark import SparkContext
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from time import time
+
 analyzer = SentimentIntensityAnalyzer()
-sc = SparkContext('local[4]')
-data = sc.textFile('dataset/small.csv')
+sc = SparkContext('local[10]')
+
+start = time()
+
+myrdd = sc.textFile('dataset/small3.csv')
+data = myrdd.repartition(10)
+print(data.getNumPartitions())
+
 def get_sent(sentence):
     analyzer = SentimentIntensityAnalyzer()
     return analyzer.polarity_scores(sentence)
+    
 out = data.map(lambda x: (x,get_sent(x)))
-corp = out.filter(lambda x: x[1]["neg"]>0.25).map(lambda x: x[0]).flatMap(lambda x: x.split())
-corpus = corp.take(100000)
+corp = out.filter(lambda x: x[1]["neg"]>0.5).map(lambda x: x[0]).flatMap(lambda x: x.split())
+corpus = corp.take(10000)
+
+print(time()-start)
+
 def make_pairs(corpus):
     for i in range(len(corpus)-1):
         yield (corpus[i], corpus[i+1])
@@ -32,8 +44,11 @@ for k in range(100):
     n_words = 10
 
     for i in range(n_words):
-        chain.append(np.random.choice(word_dict[chain[-1]]))
-
+        try:
+            chain.append(np.random.choice(word_dict[chain[-1]]))
+        except KeyError as e:
+            break
+        
     sent = ' '.join(chain)
     neg_list.append(sent)
 
@@ -44,5 +59,8 @@ total = 0
 for j in range(len(output)):
     sentement = get_sent(output[j])
     total += sentement["neg"]
-
+    
 average = total/len(output)
+print(average)
+
+np.savetxt('fake.out', output, fmt='%s')
