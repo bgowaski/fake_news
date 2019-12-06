@@ -4,13 +4,13 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from time import time
 
 analyzer = SentimentIntensityAnalyzer()
-sc = SparkContext('local[10]')
+sc = SparkContext('local[400]')
 
 start = time()
 
 myrdd = sc.textFile('dataset/small3.csv')
-data = myrdd.repartition(10)
-print(data.getNumPartitions())
+data = myrdd.repartition(400)
+print("Num partitions: ", data.getNumPartitions())
 
 def get_sent(sentence):
     analyzer = SentimentIntensityAnalyzer()
@@ -20,7 +20,7 @@ out = data.map(lambda x: (x,get_sent(x)))
 corp = out.filter(lambda x: x[1]["neg"]>0.5).map(lambda x: x[0]).flatMap(lambda x: x.split())
 corpus = corp.take(10000)
 
-print(time()-start)
+print("Execution time:", (time()-start))
 
 def make_pairs(corpus):
     for i in range(len(corpus)-1):
@@ -58,9 +58,19 @@ total = 0
 
 for j in range(len(output)):
     sentement = get_sent(output[j])
-    total += sentement["neg"]
+    total += sentement['neg']
     
 average = total/len(output)
-print(average)
+print("Average: ", average)
+
+total = 0
+
+for j in range(len(output)):
+    sentement = get_sent(output[j])
+    if(sentement['neg'] > 0.5):
+        total += 1
+        
+error = 1 - (total/100)
+print("Error: ", error)
 
 np.savetxt('fake.out', output, fmt='%s')
