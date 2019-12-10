@@ -1,5 +1,5 @@
 """
-Authors: Ben Gowaski, Siddith Gagger, Matin Raayai Ardakani
+Authors: Ben Gowaski, Siddarth Gaggar, Matin Raayai Ardakani
 Script for calculating the sentiment of each news entry of a dataset using
 Apache Spark and various text analytics Python libraries and filtering out the
 ones with the desired sentiment polarity score.
