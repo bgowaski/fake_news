@@ -62,16 +62,11 @@ def generate_fake_news(data, max_length):
                           .cache()
     first_element = mrkv_pairs.filter(lambda x: x[0] != "SENTENCE_END" and \
                                       x[1] != "SENTENCE_END" and x[0][0].isupper())\
-                              .sample(False, data.getNumPartitions()/data.count()).take(1)[0]
-    fake_news = first_element[0].capitalize()
+                              .takeSample(False, 1)[0]
+    fake_news = first_element[0]
     cur_wrd = first_element[1]
     for i in range(max_length):
-        pair_count = 0
-        sampling_frac = Frac({cur_wrd: 0.5})
-        while pair_count == 0:
-            random_pair_sample = mrkv_pairs.sampleByKey(False, sampling_frac).cache()
-            pair_count = random_pair_sample.count()
-        cur_pair = random_pair_sample.take(1)[0]
+        cur_pair = mrkv_pairs.filter(lambda x: x[0] == cur_wrd).takeSample(False, 1)[0]
         fake_news += (" " + cur_pair[0])
         cur_wrd = cur_pair[1]
         if (cur_wrd == "SENTENCE_END"):
