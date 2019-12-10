@@ -1,0 +1,16 @@
+In [46]: def generate_fake_news(data, num_entries, min_length, max_length): 
+    ...:     from pyspark import StorageLevel 
+    ...:     modd_data = data.map(lambda x: x + " SENTENCE_END") 
+    ...:     mrkv_pairs = modd_data.map(lambda x: x.split())\ 
+    ...:                           .map(lambda x: [x[0].capitalize()] + x[1:])\ 
+    ...:                           .flatMap(lambda x: [(x[i], x[i + 1]) for i in range(len(x) - 1)]) 
+    ...:     revrsed_mrkv_pairs = mrkv_pairs.map(lambda x: (x[1], x[0]))\ 
+    ...:                                    .partitionBy(data.getNumPartitions())\ 
+    ...:                                    .cache() 
+    ...:     cur_matrix = mrkv_pairs.cache() 
+    ...:     cur_matrix = cur_matrix.map(lambda x: (x[0], (x[1], [x[0], x[1]]))).cache() 
+    ...:     print(cur_matrix.take(1)) 
+    ...:     for i in range(max_length): 
+    ...:         cur_matrix = revrsed_mrkv_pairs.join(cur_matrix)\ 
+    ...:                                        .map(lambda x: (x[1][0], (x[0], [x[1][0]] + x[1][1][1]))).persist() 
+    ...:     print(cur_matrix.take(1)) 
