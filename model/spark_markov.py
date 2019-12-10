@@ -11,6 +11,7 @@ def get_parsed_args():
     parser.add_argument('input',
                         help='Input dataset.')
     parser.add_argument('maxwordlength',
+			type=int,
                         help='Maximum word length of the fake news.')
     parser.add_argument('--sparknodes',
                         type=int,

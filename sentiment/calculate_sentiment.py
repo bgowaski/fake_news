@@ -31,6 +31,7 @@ def get_parsed_args():
                         help='The lower bound for the sentiment scores of the '
                              'news extracted.')
     parser.add_argument('upperbound',
+                        type=float,
                         default=1.0,
                         help='The upper bound for the sentiment scores of the '
                              'news extracted.')
@@ -140,4 +141,4 @@ if __name__ == "__main__":
     save_results(sntmnt_rdd, args.output)
     end_time = time()
     print("Execution time from reading the input data to saving the computed "
-          "data: %f", end_time - start_time)
+          "data: %f" % (end_time - start_time))
