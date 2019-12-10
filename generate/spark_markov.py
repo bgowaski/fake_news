@@ -46,6 +46,14 @@ def read_input_data(spark_context, path, num_partitions):
     print("Number of data partitions: %d" % in_data.getNumPartitions())
     return in_data
 
+class Frac(dict):
+    def __getitem__(self, idx):
+        if idx in self:
+            return super().__getitem__(idx)
+        else:
+            return 0
+
+
 def generate_fake_news(data, max_length):
     modd_data = data.map(lambda x: x + " SENTENCE_END")
     mrkv_pairs = modd_data.map(lambda x: x.split())\
@@ -59,9 +67,9 @@ def generate_fake_news(data, max_length):
     cur_wrd = first_element[1]
     for i in range(max_length):
         pair_count = 0
+        sampling_frac = Frac({cur_wrd: 0.5})
         while pair_count == 0:
-            random_pair_sample = mrkv_pairs.filter(lambda x: x[0] == cur_wrd)\
-                                           .sample(False, 0.5)
+            random_pair_sample = mrkv_pairs.sampleByKey(False, sampling_frac).cache()
             pair_count = random_pair_sample.count()
         cur_pair = random_pair_sample.take(1)[0]
         fake_news += (" " + cur_pair[0])
@@ -76,7 +84,7 @@ if __name__ == "__main__":
     args = get_parsed_args()
     sc = start_spark_context(args.sparknodes)
     start_time = time()
-    data = read_input_data(sc, args.input, args.sparknodes)
+    data = read_input_data(sc, args.input, args.sparknodes).cache()
     fake_news = generate_fake_news(data, args.maxwordlength)
     print("Fake news: %s." % fake_news)
     end_time = time()
