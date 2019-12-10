@@ -127,7 +127,7 @@ def fltr_intvl_from_sntmnt_rdd(sntmnt_rdd, lowerbound, upperbound):
 
 def save_results(calculated_stmnt_rdd, path):
     print("Saving results to %s." % path)
-    calculated_stmnt_rdd.saveAsTextFile(path)
+    calculated_stmnt_rdd.map(lambda x: x[0]).saveAsTextFile(path)
 
 if __name__ == "__main__":
     from time import time
