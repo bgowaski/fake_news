@@ -10,8 +10,6 @@ def get_parsed_args():
                                      argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('input',
                         help='Input dataset.')
-    parser.add_argument('output',
-                        help='Path to save the generated fake news.')
     parser.add_argument('maxwordlength',
                         help='Maximum word length of the fake news.')
     parser.add_argument('--sparknodes',
@@ -55,7 +53,7 @@ def generate_fake_news(data, max_length):
                           .cache()
     first_element = mrkv_pairs.filter(lambda x: x[0] != "SENTENCE_END" and \
                                       x[1] != "SENTENCE_END" and x[0][0].isupper())\
-                              .sample(False, 0.1).take(1)[0]
+                              .sample(False, data.getNumPartitions()/data.count()).take(1)[0]
     fake_news = first_element[0].capitalize()
     cur_wrd = first_element[1]
     for i in range(max_length):
@@ -79,6 +77,7 @@ if __name__ == "__main__":
     start_time = time()
     data = read_input_data(sc, args.input, args.sparknodes)
     fake_news = generate_fake_news(data, args.maxwordlength)
+    print("Fake news: %s." % fake_news)
     end_time = time()
     print("Execution time from reading the input data to saving the computed "
           "data: %f", end_time - start_time)
