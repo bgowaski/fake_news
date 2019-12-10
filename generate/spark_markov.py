@@ -10,6 +10,9 @@ def get_parsed_args():
                                      argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('input',
                         help='Input dataset.')
+    parser.add_argument('numentries',
+			type=int,
+                        help='Number of fake news entries.')
     parser.add_argument('maxwordlength',
 			type=int,
                         help='Maximum word length of the fake news.')
@@ -54,25 +57,30 @@ class Frac(dict):
             return 0
 
 
-def generate_fake_news(data, max_length):
+def generate_fake_news(data, num_entries, max_length):
     modd_data = data.map(lambda x: x + " SENTENCE_END")
     mrkv_pairs = modd_data.map(lambda x: x.split())\
                           .map(lambda x: [x[0].capitalize()] + x[1:])\
                           .flatMap(lambda x: [(x[i], x[i + 1]) for i in range(len(x) - 1)])\
                           .cache()
-    first_element = mrkv_pairs.filter(lambda x: x[0] != "SENTENCE_END" and \
-                                      x[1] != "SENTENCE_END" and x[0][0].isupper())\
-                              .takeSample(False, 1)[0]
-    fake_news = first_element[0]
-    cur_wrd = first_element[1]
-    for i in range(max_length):
-        cur_pair = mrkv_pairs.filter(lambda x: x[0] == cur_wrd).takeSample(False, 1)[0]
-        fake_news += (" " + cur_pair[0])
-        cur_wrd = cur_pair[1]
-        if (cur_wrd == "SENTENCE_END"):
-            fake_news += "."
-            break
-    return fake_news
+    news_entries = []
+
+    for _ in range(num_entries):
+        first_element = mrkv_pairs.filter(lambda x: x[0] != "SENTENCE_END" and \
+                                          x[1] != "SENTENCE_END" and x[0][0].isupper())\
+                                  .takeSample(False, 1)[0]
+        fake_news = first_element[0]
+        cur_wrd = first_element[1]
+
+        for _ in range(max_length):
+            cur_pair = mrkv_pairs.filter(lambda x: x[0] == cur_wrd).takeSample(False, 1)[0]
+            fake_news += (" " + cur_pair[0])
+            cur_wrd = cur_pair[1]
+            if cur_wrd == "SENTENCE_END":
+                fake_news += "."
+                break
+        news_entries.append(fake_news)
+    return news_entries
 
 if __name__ == "__main__":
     from time import time
@@ -80,7 +88,7 @@ if __name__ == "__main__":
     sc = start_spark_context(args.sparknodes)
     start_time = time()
     data = read_input_data(sc, args.input, args.sparknodes).cache()
-    fake_news = generate_fake_news(data, args.maxwordlength)
+    fake_news = generate_fake_news(data, args.numentries, args.maxwordlength)
     print("Fake news: %s." % fake_news)
     end_time = time()
     print("Execution time from reading the input data to saving the computed "
