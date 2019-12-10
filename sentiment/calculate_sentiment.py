@@ -64,7 +64,7 @@ with each element being a single entry of the news dataset.
 def read_input_data(spark_context, path, num_partitions):
     print("Reading data from %s." % path)
     in_data = spark_context.textFile(path).repartition(num_partitions)
-    print("Number of data partitions: %d" % num_partitions)
+    print("Number of data partitions: %d" % in_data.getNumPartitions())
     return in_data
 
 """
