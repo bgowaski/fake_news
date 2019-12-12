@@ -7,7 +7,10 @@ def generate_fake_news(data,
                        starting_comp_entries=1000):
     from numpy.random import choice
     from operator import add
+    from time import time
     # Will incrementally save output as we pass min_length.
+    print(time())
+    start_time = time()
     output = []
     num_entries_remaining = min_num_entries
     modd_data = data.map(lambda x: x + " SENTENCE_END")
@@ -45,9 +48,9 @@ def generate_fake_news(data,
                               .mapValues(choice)\
                               .values()\
                               .map(lambda x: (x, True))\
-                              .partitionBy(num_parts)
+                              .partitionBy(num_parts, lambda x: x[0])
         cur_entries = cur_entries.map(lambda x: (x[0][1][0], x[1]))\
-                                 .partitionBy(num_parts)\
+                                 .partitionBy(num_parts, lambda x: x[0])\
                                  .join(smpl_rdd)\
                                  .map(lambda x: x[1][0]).cache()
         # Approximate the count. We don't want to waste too much computational
@@ -57,7 +60,8 @@ def generate_fake_news(data,
         # Clip the number of entries to the starting computational entries.
         if cur_total_entries > starting_comp_entries:
             cur_entries = cur_entries.sample(False,
-                                             float(starting_comp_entries) / cur_total_entries)
+                                             float(starting_comp_entries) / cur_total_entries)\
+                                     .cache()
         # We can extract news entries that have reached the end of the sentence
         # if we have met the minimum required word length.
         if i >= min_length:
@@ -73,4 +77,7 @@ def generate_fake_news(data,
         # Repartition for the next loop.
         cur_entries = cur_entries.partitionBy(num_parts)
     output.extend(cur_entries.map(lambda x: x[1][1]).collect())
+    end_time = time()
+    print(time())
+    print("Total amount of time: %f" % (end_time - start_time))
     return output
